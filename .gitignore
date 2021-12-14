@@ -1,0 +1,39 @@
+*.7z
+*.bak
+*.deb
+*.jar
+*.rar
+*.run
+*.sig
+*.tar
+*.tar.bz2
+*.tar.gz
+*.tar.xz
+*.tbz
+*.tbz2
+*.tgz
+*.txz
+*.zip
+.*.swp
+.editix
+
+# https://github.com/github/gitignore/blob/master/Go.gitignore
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+# But DO include the actual tests.
+!_test.go
+!*_test.go
+!*_test/
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
