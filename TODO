@@ -1,0 +1,3 @@
+- XML import/export?
+-- compat with kwalletmanager
+--- Will require conversion to different struct model.
