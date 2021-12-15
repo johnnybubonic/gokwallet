@@ -163,3 +163,92 @@ const (
 	// DbusPath is the path for DbusService.
 	DbusPath string = "/modules/kwalletd5"
 )
+
+// Recursion options.
+
+/*
+	RecurseNone specifies that no recursion should be done.
+	If present, it takes precedent over all over RecurseOptsFlags present.
+
+	Performed in/from:
+	WalletManager
+	Wallet
+	Folder
+	(WalletItem)
+*/
+const RecurseNone RecurseOptsFlag = 0
+const (
+	/*
+		RecurseWallet indicates that Wallet objects should have Wallet.Update called.
+
+		Performed in/from: WalletManager
+	*/
+	RecurseWallet RecurseOptsFlag = 1 << iota
+	/*
+		RecurseFolder indicates that Folder objects should have Folder.Update called.
+
+		Performed in/from:
+		Wallet
+
+		May be performed in/from (depending on other flags):
+		WalletManager
+	*/
+	RecurseFolder
+	/*
+		RecurseWalletItem indicates that all WalletItem entries should have (WalletItem).Update() called.
+		If present, it takes precedent over all over relevant RecurseOptsFlags present
+		(RecursePassword, RecurseMap, RecurseBlob, RecurseUnknown).
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other flags):
+		WalletManager
+		Wallet
+	*/
+	RecurseWalletItem
+	/*
+		RecursePassword indicates that Password objects should have Password.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other flags):
+		WalletManager
+		Wallet
+	*/
+	RecursePassword
+	/*
+		RecurseMap indicates that Map objects should have Map.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other flags):
+		WalletManager
+		Wallet
+	*/
+	RecurseMap
+	/*
+		RecurseBlob indicates that Blob objects should have Blob.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other flags):
+		WalletManager
+		Wallet
+	*/
+	RecurseBlob
+	/*
+		RecurseUnknown indicates that UnknownItem objects should have UnknownItem.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other flags):
+		WalletManager
+		Wallet
+	*/
+	RecurseUnknown
+)

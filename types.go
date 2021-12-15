@@ -2,6 +2,7 @@ package gokwallet
 
 import (
 	"github.com/godbus/dbus/v5"
+	"r00t2.io/goutils/types"
 )
 
 /*
@@ -131,3 +132,10 @@ type UnknownItem struct {
 type WalletItem interface {
 	isWalletItem() (isWalletItem bool)
 }
+
+/*
+	RecurseOptsFlag is used to determine whether or not to recurse into items and fully populate them.
+	One would use a types.BitMask as a parameter type and do <BitMask>.HasFlag(<RecurseOptsFlag>).
+	See consts.go for the actual flags.
+*/
+type RecurseOptsFlag types.MaskBit
