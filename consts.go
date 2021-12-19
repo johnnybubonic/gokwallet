@@ -1,5 +1,20 @@
 package gokwallet
 
+// KwalletD Dbus returns.
+const (
+	DbusSuccess int32 = 0
+	DbusFailure int32 = 1
+)
+
+// KwalletD Dbus enums for WalletItem types.
+const (
+	kwalletdEnumTypeUnknown  = iota   // UnknownItem
+	kwalletdEnumTypePassword          // Password
+	kwalletdEnumTypeStream            // Blob
+	kwalletdEnumTypeMap               // Map
+	kwalletdEnumTypeUnused   = 0xffff // 65535
+)
+
 // KWalletD Dbus interfaces.
 const (
 	// DbusService is the Dbus service bus identifier.
@@ -14,6 +29,21 @@ const (
 	DefaultWalletName string = "kdewallet"
 	// DefaultAppID is the default name for the application (see WalletManager.AppID).
 	DefaultAppID string = "GoKwallet"
+	// DefaultWindowID is 0; we aren't guaranteed to have a window, so we pass 0 (per upstream headers' comments).
+	DefaultWindowID int64 = 0
+)
+
+var (
+	DefaultRecurseOpts *RecurseOpts = &RecurseOpts{
+		All:            false,
+		Wallets:        true,
+		Folders:        true,
+		AllWalletItems: false,
+		Passwords:      false,
+		Maps:           false,
+		Blobs:          false,
+		UnknownItems:   false,
+	}
 )
 
 // WalletManager interface.
@@ -94,10 +124,10 @@ const (
 	// DbusWMOpenAsync opens (unlocks) a Wallet asynchronously.
 	DbusWMOpenAsync string = DbusInterfaceWM + ".openAsync"
 
-	// DbusWMOpenPath opens (unlocks) a Wallet by its filepath.
+	// DbusWMOpenPath opens a Wallet by its filepath.
 	DbusWMOpenPath string = DbusInterfaceWM + ".openPath"
 
-	// DbusWMOpenPathAsync opens (unlocks) a Wallet by its filepath asynchronously.
+	// DbusWMOpenPathAsync opens a Wallet by its filepath asynchronously.
 	DbusWMOpenPathAsync string = DbusInterfaceWM + ".openPath"
 
 	// DbusWMPamOpen opens (unlocks) a Wallet via PAM.
@@ -112,19 +142,31 @@ const (
 	// DbusWMReadEntry fetches a WalletItem by its name from a Folder (as a byteslice).
 	DbusWMReadEntry string = DbusInterfaceWM + ".readEntry"
 
-	// DbusWMReadEntryList returns a map of WalletItem objects in a Folder.
+	/*
+		DbusWMReadEntryList returns a map of WalletItem objects in a Folder.
+
+		Deprecated: use DbusWMEntriesList instead.
+	*/
 	DbusWMReadEntryList string = DbusInterfaceWM + ".readEntryList"
 
 	// DbusWMReadMap returns a Map from a Folder (as a byteslice).
 	DbusWMReadMap string = DbusInterfaceWM + ".readMap"
 
-	// DbusWMReadMapList returns a map of Map objects in a Folder.
+	/*
+		DbusWMReadMapList returns a map of Map objects in a Folder.
+
+		Deprecated: use DbusWMMapList instead.
+	*/
 	DbusWMReadMapList string = DbusInterfaceWM + ".readMapList"
 
 	// DbusWMReadPassword returns a Password from a Folder (as a byteslice).
 	DbusWMReadPassword string = DbusInterfaceWM + ".readPassword"
 
-	// DbusWMReadPasswordList returns a map of Password objects in a Folder.
+	/*
+		DbusWMReadPasswordList returns a map of Password objects in a Folder.
+
+		Deprecated: use DbusWMPasswordList instead.
+	*/
 	DbusWMReadPasswordList string = DbusInterfaceWM + ".readPasswordList"
 
 	// DbusWMReconfigure is [FUNCTION UNKNOWN/UNDOCUMENTED; TODO? NOT IMPLEMENTED.]
@@ -162,93 +204,4 @@ const (
 const (
 	// DbusPath is the path for DbusService.
 	DbusPath string = "/modules/kwalletd5"
-)
-
-// Recursion options.
-
-/*
-	RecurseNone specifies that no recursion should be done.
-	If present, it takes precedent over all over RecurseOptsFlags present.
-
-	Performed in/from:
-	WalletManager
-	Wallet
-	Folder
-	(WalletItem)
-*/
-const RecurseNone RecurseOptsFlag = 0
-const (
-	/*
-		RecurseWallet indicates that Wallet objects should have Wallet.Update called.
-
-		Performed in/from: WalletManager
-	*/
-	RecurseWallet RecurseOptsFlag = 1 << iota
-	/*
-		RecurseFolder indicates that Folder objects should have Folder.Update called.
-
-		Performed in/from:
-		Wallet
-
-		May be performed in/from (depending on other flags):
-		WalletManager
-	*/
-	RecurseFolder
-	/*
-		RecurseWalletItem indicates that all WalletItem entries should have (WalletItem).Update() called.
-		If present, it takes precedent over all over relevant RecurseOptsFlags present
-		(RecursePassword, RecurseMap, RecurseBlob, RecurseUnknown).
-
-		Performed in/from:
-		Folder
-
-		May be performed in/from (depending on other flags):
-		WalletManager
-		Wallet
-	*/
-	RecurseWalletItem
-	/*
-		RecursePassword indicates that Password objects should have Password.Update() called.
-
-		Performed in/from:
-		Folder
-
-		May be performed in/from (depending on other flags):
-		WalletManager
-		Wallet
-	*/
-	RecursePassword
-	/*
-		RecurseMap indicates that Map objects should have Map.Update() called.
-
-		Performed in/from:
-		Folder
-
-		May be performed in/from (depending on other flags):
-		WalletManager
-		Wallet
-	*/
-	RecurseMap
-	/*
-		RecurseBlob indicates that Blob objects should have Blob.Update() called.
-
-		Performed in/from:
-		Folder
-
-		May be performed in/from (depending on other flags):
-		WalletManager
-		Wallet
-	*/
-	RecurseBlob
-	/*
-		RecurseUnknown indicates that UnknownItem objects should have UnknownItem.Update() called.
-
-		Performed in/from:
-		Folder
-
-		May be performed in/from (depending on other flags):
-		WalletManager
-		Wallet
-	*/
-	RecurseUnknown
 )

@@ -2,7 +2,6 @@ package gokwallet
 
 import (
 	"github.com/godbus/dbus/v5"
-	"r00t2.io/goutils/types"
 )
 
 /*
@@ -45,8 +44,22 @@ type WalletManager struct {
 	/*
 		Wallets is the collection of Wallets accessible in/to this WalletManager.
 		Wallet.Name is the map key.
+		(TODO: When wallet file support is added, the *filename* will be the map key.
+			   This is to mitigate namespace conflicts between Dbus and file wallets.)
 	*/
 	Wallets map[string]*Wallet `json:"wallets"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// Enabled is true if KWalletD is enabled/running.
+	Enabled bool `json:"enabled"`
+	// Local is the "local" wallet.
+	Local *Wallet `json:"local_wallet"`
+	// Network is the "network" wallet.
+	Network *Wallet `json:"network_wallet"`
+	// isInit flags whether this is "properly" set up (i.e. was initialized via NewWalletManager).
+	isInit bool
+	// walletFiles are (resolved and vetted) wallet files (kwl, xml).
+	walletFiles []string
 }
 
 // Wallet contains one or more (or none) Folder objects.
@@ -59,6 +72,22 @@ type Wallet struct {
 		Folder.Name is the map key.
 	*/
 	Folders map[string]*Folder `json:"folders"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// IsUnlocked specifies if this Wallet is open ("unlocked") or not.
+	IsUnlocked bool `json:"open"`
+	/*
+		FilePath is:
+		- empty if this is an internal Wallet, or
+		- the filepath to the wallet file if this is an on-disk wallet (either .kwl or .xml)
+	*/
+	FilePath string `json:"wallet_file"`
+	// wm is the parent WalletManager this Wallet was fetched from.
+	wm *WalletManager
+	// handle is this Wallet's handler number.
+	handle int32
+	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	isInit bool
 }
 
 // Folder contains secret object collections of Password, Map, Blob, and UnknownItem objects.
@@ -86,6 +115,16 @@ type Folder struct {
 		Unknown.Name is the map key.
 	*/
 	Unknown map[string]*UnknownItem `json:"unknown"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// wm is the parent WalletManager that Folder.wallet was fetched from.
+	wm *WalletManager
+	// wallet is the parent Wallet this Folder was fetched from.
+	wallet *Wallet
+	// handle is this Folder's handler number.
+	handle int32
+	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	isInit bool
 }
 
 // Password is a straightforward single-value secret of text.
@@ -95,6 +134,18 @@ type Password struct {
 	Name string `json:"name"`
 	// Value is this Password's value.
 	Value string `json:"value"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// wm is the parent WalletManager that Password.folder.wallet was fetched from.
+	wm *WalletManager
+	// wallet is the parent Wallet that Password.folder was fetched from.
+	wallet *Wallet
+	// folder is the parent Folder this Password was fetched from.
+	folder *Folder
+	// handle is this Password's handler number.
+	handle int32
+	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	isInit bool
 }
 
 // Map is a dictionary or key/value secret.
@@ -104,6 +155,18 @@ type Map struct {
 	Name string `json:"name"`
 	// Value is this Map's value.
 	Value map[string]string `json:"value"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// wm is the parent WalletManager that Map.folder.wallet was fetched from.
+	wm *WalletManager
+	// wallet is the parent Wallet that Map.folder was fetched from.
+	wallet *Wallet
+	// folder is the parent Folder this Map was fetched from.
+	folder *Folder
+	// handle is this Map's handler number.
+	handle int32
+	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	isInit bool
 }
 
 // Blob (binary large object, typographically BLOB) is secret binary data.
@@ -113,6 +176,18 @@ type Blob struct {
 	Name string `json:"name"`
 	// Value is this Blob's value.
 	Value []byte `json:"value"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// wm is the parent WalletManager that Blob.folder.wallet was fetched from.
+	wm *WalletManager
+	// wallet is the parent Wallet that Blob.folder was fetched from.
+	wallet *Wallet
+	// folder is the parent Folder this Blob was fetched from.
+	folder *Folder
+	// handle is this Blob's handler number.
+	handle int32
+	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	isInit bool
 }
 
 /*
@@ -126,6 +201,18 @@ type UnknownItem struct {
 	Name string `json:"name"`
 	// Value is the Dbus path of this UnknownItem.
 	Value dbus.ObjectPath `json:"value"`
+	// Recurse contains the relevant RecurseOpts.
+	Recurse *RecurseOpts `json:"recurse_opts"`
+	// wm is the parent WalletManager that UnknownItem.folder.wallet was fetched from.
+	wm *WalletManager
+	// wallet is the parent Wallet that UnknownItem.folder was fetched from.
+	wallet *Wallet
+	// folder is the parent Folder this UnknownItem was fetched from.
+	folder *Folder
+	// handle is this UnknownItem's handler number.
+	handle int32
+	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	isInit bool
 }
 
 // WalletItem is an interface to manage wallet objects: Password, Map, Blob, or UnknownItem.
@@ -134,8 +221,93 @@ type WalletItem interface {
 }
 
 /*
-	RecurseOptsFlag is used to determine whether or not to recurse into items and fully populate them.
-	One would use a types.BitMask as a parameter type and do <BitMask>.HasFlag(<RecurseOptsFlag>).
-	See consts.go for the actual flags.
+	RecurseOpts controls whether recursion should be done on objects when fetching them.
+	E.g. if fetching a WalletManager (via NewWalletManager) and RecurseOpts.Wallet is true,
+	then WalletManager.Wallets will be populated with Wallet objects.
 */
-type RecurseOptsFlag types.MaskBit
+type RecurseOpts struct {
+	/*
+		All, if true, specifies that all possible recursions should be done.
+		If true, it takes precedent over all over RecurseOpts fields (with the exception of RecurseOpts.AllWalletItems).
+
+		Performed in/from:
+		WalletManager
+		Wallet
+		Folder
+		(WalletItem)
+	*/
+	All bool `json:"none"`
+	/*
+		Wallets, if true, indicates that Wallet objects should have Wallet.Update called.
+
+		Performed in/from: WalletManager
+	*/
+	Wallets bool `json:"wallet"`
+	/*
+		Folders, if true, indicates that Folder objects should have Folder.Update called.
+
+		Performed in/from:
+		Wallet
+
+		May be performed in/from (depending on other fields):
+		WalletManager
+	*/
+	Folders bool `json:"folder"`
+	/*
+		AllWalletItems, if true, indicates that all WalletItem entries should have (WalletItem).Update() called.
+		If true, it takes precedent over all over relevant RecurseOpts fields for each WalletItem type
+		(i.e. RecurseOpts.Passwords, RecurseOpts.Maps, RecurseOpts.Blobs, RecurseOpts.UnknownItems).
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other fields):
+		WalletManager
+		Wallet
+	*/
+	AllWalletItems bool `json:"wallet_item"`
+	/*
+		Passwords, if true, indicates that Password objects should have Password.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other fields):
+		WalletManager
+		Wallet
+	*/
+	Passwords bool `json:"password"`
+	/*
+		Maps, if true, indicates that Map objects should have Map.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other fields):
+		WalletManager
+		Wallet
+	*/
+	Maps bool `json:"map"`
+	/*
+		Blobs, if true, indicates that Blob objects should have Blob.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other fields):
+		WalletManager
+		Wallet
+	*/
+	Blobs bool `json:"blob"`
+	/*
+		UnknownItems indicates that UnknownItem objects should have UnknownItem.Update() called.
+
+		Performed in/from:
+		Folder
+
+		May be performed in/from (depending on other fields):
+		WalletManager
+		Wallet
+	*/
+	UnknownItems bool `json:"unknown_item"`
+}

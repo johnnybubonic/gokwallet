@@ -1,3 +1,6 @@
 https://api.kde.org/frameworks/kwallet/html/index.html
+https://invent.kde.org/frameworks/kwallet/-/blob/master/src/api/KWallet/kwallet.h
+
+https://github.com/99designs/keyring/blob/master/kwallet.go
 
 Dbus methods etc.: https://invent.kde.org/frameworks/kwallet/-/blob/master/src/api/KWallet/org.kde.KWallet.xml

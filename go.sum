@@ -2,6 +2,6 @@ github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf/go.mod h1:F5haX7
 github.com/godbus/dbus/v5 v5.0.6 h1:mkgN1ofwASrYnJ5W6U/BxG15eXXXjirgZc7CLqkcaro=
 github.com/godbus/dbus/v5 v5.0.6/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/jszwec/csvutil v1.5.0/go.mod h1:Rpu7Uu9giO9subDyMCIQfHVDuLrcaC36UA4YcJjGBkg=
-r00t2.io/goutils v1.0.1 h1:f1m2QRBF8XsW3peYf1I2q37npgf+5bmJBbrLzCFtm34=
-r00t2.io/goutils v1.0.1/go.mod h1:CMK3RGnMSyjDSfYxeFQl/oJTkkUMS1jhSTdGTkAPpQw=
+r00t2.io/goutils v1.1.0 h1:vJqEWvdX0TKDyT+hTgws0wA1dc/F8JkQKw5cDHz0wH0=
+r00t2.io/goutils v1.1.0/go.mod h1:CMK3RGnMSyjDSfYxeFQl/oJTkkUMS1jhSTdGTkAPpQw=
 r00t2.io/sysutils v0.0.0-20210224054841-55ac47c86928/go.mod h1:XzJkBF6SHAODEszJlOcjtGoTHwYnZZNmseA6PyOujes=

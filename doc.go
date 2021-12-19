@@ -5,7 +5,7 @@ Package gokwallet serves as a Golang interface to KDE's KWallet (https://utils.k
 
 Note that to use this library, the running machine must have both Dbus and kwalletd running.
 
-Note that this library interfaces with kwalletd. KWallet is in the process of moving to libsecret/SecretService
+Relatedly, note also that this library interfaces with kwalletd. KWallet is in the process of moving to libsecret/SecretService
 (see https://bugs.kde.org/show_bug.cgi?id=313216 and https://invent.kde.org/frameworks/kwallet/-/merge_requests/11),
 thus replacing kwalletd.
 While there is a pull request in place, it has not yet been merged in (and it may be a while before downstream
@@ -72,5 +72,8 @@ Usage
 
 Full documentation can be found via inline documentation.
 Additionally, use either https://pkg.go.dev/r00t2.io/gokwallet or https://pkg.go.dev/golang.org/x/tools/cmd/godoc (or `go doc`) in the source root.
+
+You most likely do *not* want to call any New<object> function directly;
+NewWalletManager with its RecurseOpts parameter (`recursion`) should get you everything you want/need.
 */
 package gokwallet
