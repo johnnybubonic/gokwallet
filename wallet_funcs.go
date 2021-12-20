@@ -1,5 +1,9 @@
 package gokwallet
 
+import (
+	"github.com/godbus/dbus/v5"
+)
+
 /*
 	NewWallet returns a Wallet. It requires a RecurseOpts
 	(you can use DefaultRecurseOpts, call NewRecurseOpts, or provide your own RecurseOpts struct).
@@ -27,7 +31,7 @@ func NewWallet(wm *WalletManager, name string, recursion *RecurseOpts) (wallet *
 		return
 	}
 
-	if wallet.Recurse.All || wallet.Recurse.Wallets {
+	if wallet.Recurse.All || wallet.Recurse.Folders {
 		if err = wallet.Update(); err != nil {
 			return
 		}
@@ -38,13 +42,73 @@ func NewWallet(wm *WalletManager, name string, recursion *RecurseOpts) (wallet *
 	return
 }
 
+// Disconnect disconnects this Wallet from its parent WalletManager.
+func (w *Wallet) Disconnect() (err error) {
+
+	var ok bool
+
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
+	if err = w.Dbus.Call(
+		DbusWMDisconnectApp, 0, w.Name, w.wm.AppID,
+	).Store(&ok); err != nil {
+		return
+	}
+
+	if !ok {
+		err = ErrNoDisconnect
+	}
+
+	return
+}
+
+// DisconnectApplication disconnects this Wallet from a specified WalletManager/application (see Wallet.Connections).
+func (w *Wallet) DisconnectApplication(appName string) (err error) {
+
+	var ok bool
+
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
+	if err = w.Dbus.Call(
+		DbusWMDisconnectApp, 0, appName, w.wm.AppID,
+	).Store(&ok); err != nil {
+		return
+	}
+
+	if !ok {
+		err = ErrNoDisconnect
+	}
+
+	return
+}
+
+/*
+	ChangePassword will change (or set) the password for a Wallet.
+	Note that this *must* be done via the windowing layer.
+*/
+func (w *Wallet) ChangePassword() (err error) {
+
+	var call *dbus.Call
+
+	call = w.Dbus.Call(
+		DbusWMChangePassword, 0, w.Name, DefaultWindowID, w.wm.AppID,
+	)
+
+	err = call.Err
+
+	return
+}
+
 // Close closes a Wallet.
 func (w *Wallet) Close() (err error) {
 
 	var rslt int32
 
-	if !w.isInit {
-		err = ErrNotInitialized
+	if err = w.walletCheck(); err != nil {
 		return
 	}
 
@@ -56,6 +120,80 @@ func (w *Wallet) Close() (err error) {
 	}
 
 	err = resultCheck(rslt)
+
+	return
+}
+
+// Connections lists the application names for connections to ("users of") this Wallet.
+func (w *Wallet) Connections() (connList []string, err error) {
+
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
+	if err = w.Dbus.Call(
+		DbusWMUsers, 0, w.Name,
+	).Store(&connList); err != nil {
+		return
+	}
+
+	return
+}
+
+// CreateFolder creates a new Folder in a Wallet.
+func (w *Wallet) CreateFolder(name string) (err error) {
+
+	var ok bool
+
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
+	if err = w.Dbus.Call(
+		DbusWMCreateFolder, 0, w.handle, name, w.wm.AppID,
+	).Store(&ok); err != nil {
+		return
+	}
+
+	if !ok {
+		err = ErrNoCreate
+	}
+
+	return
+}
+
+// Delete deletes a Wallet.
+func (w *Wallet) Delete() (err error) {
+
+	var rslt int32
+
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
+	if err = w.Dbus.Call(
+		DbusWMDeleteWallet, 0, w.Name,
+	).Store(&rslt); err != nil {
+		return
+	}
+
+	err = resultCheck(rslt)
+
+	return
+}
+
+// FolderExists indicates if a Folder exists in a Wallet or not.
+func (w *Wallet) FolderExists(folderName string) (exists bool, err error) {
+
+	var notExists bool
+
+	if err = w.Dbus.Call(
+		DbusWMFolderNotExist, 0, w.Name, folderName,
+	).Store(&notExists); err != nil {
+		return
+	}
+
+	exists = !notExists
 
 	return
 }
@@ -81,8 +219,6 @@ func (w *Wallet) ForceClose() (err error) {
 	}
 
 	err = resultCheck(rslt)
-
-	return
 
 	return
 }
@@ -124,6 +260,8 @@ func (w *Wallet) ListFolders() (folderList []string, err error) {
 */
 func (w *Wallet) Open() (err error) {
 
+	var handler *int32
+
 	if _, err = w.IsOpen(); err != nil {
 		return
 	}
@@ -131,9 +269,16 @@ func (w *Wallet) Open() (err error) {
 	if !w.IsUnlocked {
 		if err = w.Dbus.Call(
 			DbusWMOpen, 0,
-		).Store(&w.handle); err != nil {
+		).Store(handler); err != nil {
 			return
 		}
+	}
+
+	if handler == nil {
+		err = ErrOperationFailed
+		return
+	} else {
+		w.handle = *handler
 	}
 
 	w.IsUnlocked = true

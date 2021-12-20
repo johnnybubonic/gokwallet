@@ -1,5 +1,9 @@
 package gokwallet
 
+import (
+	"github.com/godbus/dbus/v5"
+)
+
 /*
 	resultCheck checks the result code from a Dbus call and returns an error if not successful.
 	See also resultPassed.
@@ -11,6 +15,8 @@ func resultCheck(result int32) (err error) {
 	case DbusSuccess:
 		err = nil
 	case DbusFailure:
+		err = ErrOperationFailed
+	default:
 		err = ErrOperationFailed
 	}
 
@@ -29,6 +35,26 @@ func resultPassed(result int32) (passed bool) {
 		passed = true
 	case DbusFailure:
 		passed = false
+	default:
+		passed = false
+	}
+
+	return
+}
+
+// bytemapKeys is used to parse out Map names when fetching from Dbus.
+func bytemapKeys(variant dbus.Variant) (keyNames []string) {
+
+	var d map[string]dbus.Variant
+
+	d = variant.Value().(map[string]dbus.Variant)
+
+	keyNames = make([]string, len(d))
+
+	idx := 0
+	for k, _ := range d {
+		keyNames[idx] = k
+		idx++
 	}
 
 	return

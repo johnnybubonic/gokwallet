@@ -121,8 +121,6 @@ type Folder struct {
 	wm *WalletManager
 	// wallet is the parent Wallet this Folder was fetched from.
 	wallet *Wallet
-	// handle is this Folder's handler number.
-	handle int32
 	// isInit flags whether this is "properly" set up (i.e. has a handle).
 	isInit bool
 }
@@ -142,8 +140,6 @@ type Password struct {
 	wallet *Wallet
 	// folder is the parent Folder this Password was fetched from.
 	folder *Folder
-	// handle is this Password's handler number.
-	handle int32
 	// isInit flags whether this is "properly" set up (i.e. has a handle).
 	isInit bool
 }
@@ -163,8 +159,6 @@ type Map struct {
 	wallet *Wallet
 	// folder is the parent Folder this Map was fetched from.
 	folder *Folder
-	// handle is this Map's handler number.
-	handle int32
 	// isInit flags whether this is "properly" set up (i.e. has a handle).
 	isInit bool
 }
@@ -184,8 +178,6 @@ type Blob struct {
 	wallet *Wallet
 	// folder is the parent Folder this Blob was fetched from.
 	folder *Folder
-	// handle is this Blob's handler number.
-	handle int32
 	// isInit flags whether this is "properly" set up (i.e. has a handle).
 	isInit bool
 }
@@ -209,8 +201,6 @@ type UnknownItem struct {
 	wallet *Wallet
 	// folder is the parent Folder this UnknownItem was fetched from.
 	folder *Folder
-	// handle is this UnknownItem's handler number.
-	handle int32
 	// isInit flags whether this is "properly" set up (i.e. has a handle).
 	isInit bool
 }

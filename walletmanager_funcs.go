@@ -104,7 +104,7 @@ func (wm *WalletManager) CloseWallet(walletName string) (err error) {
 	Unlike Wallet.ForceClose, this closes access for ALL applications/WalletManagers
 	for the specified Wallet - not just this WalletManager.
 */
-func (wm *WalletManager) FprceCloseWallet(walletName string) (err error) {
+func (wm *WalletManager) ForceCloseWallet(walletName string) (err error) {
 
 	var rslt int32
 
@@ -202,7 +202,7 @@ func (wm *WalletManager) NetworkWallet() (w *Wallet, err error) {
 	return
 }
 
-// WalletNames returns a list of available Wallet names.
+// WalletNames returns a list of existing Wallet names.
 func (wm *WalletManager) WalletNames() (wallets []string, err error) {
 
 	if err = wm.Dbus.Call(

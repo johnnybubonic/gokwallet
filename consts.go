@@ -8,11 +8,11 @@ const (
 
 // KwalletD Dbus enums for WalletItem types.
 const (
-	kwalletdEnumTypeUnknown  = iota   // UnknownItem
-	kwalletdEnumTypePassword          // Password
-	kwalletdEnumTypeStream            // Blob
-	kwalletdEnumTypeMap               // Map
-	kwalletdEnumTypeUnused   = 0xffff // 65535
+	kwalletdEnumTypeUnknown  int32    = iota // UnknownItem (0)
+	kwalletdEnumTypePassword                 // Password (1)
+	kwalletdEnumTypeStream                   // Blob (2)
+	kwalletdEnumTypeMap                      // Map (3)
+	kwalletdEnumTypeUnused   = 0xffff        // 65535
 )
 
 // KWalletD Dbus interfaces.

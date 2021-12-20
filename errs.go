@@ -17,4 +17,10 @@ var (
 		ErrOperationFailed is a generic failure message that will occur of a Dbus operation returns non-success.
 	*/
 	ErrOperationFailed error = errors.New("a Dbus operation has failed to execute successfully")
+	/*
+		ErrNoCreate is triggered if attempting to create an item (Folder, Password, etc.) but it fails.
+	*/
+	ErrNoCreate error = errors.New("failed to create an object")
+	// ErrNoDisconnect can occur if trying to disconnect a Wallet from a WalletManager/application and a failure occurs.
+	ErrNoDisconnect error = errors.New("failed to disconnect wallet from application")
 )
