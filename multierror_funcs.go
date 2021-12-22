@@ -35,6 +35,7 @@ func NewErrors(errs ...error) (err error) {
 	return
 }
 
+// Error returns a string representation of a MultiError (to conform with the error interface).
 func (e *MultiError) Error() (errStr string) {
 
 	var numErrs int

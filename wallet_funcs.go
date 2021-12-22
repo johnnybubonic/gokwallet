@@ -223,6 +223,18 @@ func (w *Wallet) ForceClose() (err error) {
 	return
 }
 
+// HasFolder indicates if a Wallet has a Folder in it named folderName.
+func (w *Wallet) HasFolder(folderName string) (hasFolder bool, err error) {
+
+	if err = w.Dbus.Call(
+		DbusWMHasFolder, 0, w.handle, folderName, w.wm.AppID,
+	).Store(&hasFolder); err != nil {
+		return
+	}
+
+	return
+}
+
 // IsOpen returns whether a Wallet is open ("unlocked") or not (as well as updates Wallet.IsOpen).
 func (w *Wallet) IsOpen() (isOpen bool, err error) {
 
@@ -282,6 +294,28 @@ func (w *Wallet) Open() (err error) {
 	}
 
 	w.IsUnlocked = true
+
+	return
+}
+
+/*
+	RemoveFolder removes a Folder folderName from a Wallet.
+	Note that this will also remove all WalletItems in the given Folder.
+*/
+func (w *Wallet) RemoveFolder(folderName string) (err error) {
+
+	var success bool
+
+	if err = w.Dbus.Call(
+		DbusWMRemoveFolder, 0, w.handle, folderName, w.wm.AppID,
+	).Store(&success); err != nil {
+		return
+	}
+
+	if !success {
+		err = ErrOperationFailed
+		return
+	}
 
 	return
 }

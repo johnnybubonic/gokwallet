@@ -1,5 +1,9 @@
 package gokwallet
 
+import (
+	"github.com/godbus/dbus/v5"
+)
+
 /*
 	NewBlob returns a Blob. It requires a RecurseOpts
 	(you can use DefaultRecurseOpts, call NewRecurseOpts, or provide your own RecurseOpts struct).
@@ -37,7 +41,15 @@ func NewBlob(f *Folder, keyName string, recursion *RecurseOpts) (blob *Blob, err
 // Update fetches a Blob's Blob.Value.
 func (b *Blob) Update() (err error) {
 
-	// TODO.
+	var v dbus.Variant
+
+	if err = b.Dbus.Call(
+		DbusWMReadEntry, 0, b.folder.wallet.handle, b.folder.Name, b.Name, b.folder.wallet.wm.AppID,
+	).Store(&v); err != nil {
+		return
+	}
+
+	b.Value = v.Value().([]byte)
 
 	return
 }

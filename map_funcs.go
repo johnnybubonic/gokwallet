@@ -37,7 +37,17 @@ func NewMap(f *Folder, keyName string, recursion *RecurseOpts) (m *Map, err erro
 // Update fetches a Map's Map.Value.
 func (m *Map) Update() (err error) {
 
-	// TODO.
+	var b []byte
+
+	if err = m.Dbus.Call(
+		DbusWMReadMap, 0, m.folder.wallet.handle, m.folder.Name, m.Name, m.folder.wallet.wm.AppID,
+	).Store(&b); err != nil {
+		return
+	}
+
+	if m.Value, _, err = bytesToMap(b); err != nil {
+		return
+	}
 
 	return
 }

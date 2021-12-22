@@ -6,13 +6,15 @@ const (
 	DbusFailure int32 = 1
 )
 
+type kwalletdEnumType int32
+
 // KwalletD Dbus enums for WalletItem types.
 const (
-	kwalletdEnumTypeUnknown  int32    = iota // UnknownItem (0)
-	kwalletdEnumTypePassword                 // Password (1)
-	kwalletdEnumTypeStream                   // Blob (2)
-	kwalletdEnumTypeMap                      // Map (3)
-	kwalletdEnumTypeUnused   = 0xffff        // 65535
+	KwalletdEnumTypeUnknown  kwalletdEnumType = iota // UnknownItem (0)
+	KwalletdEnumTypePassword                         // Password (1)
+	KwalletdEnumTypeStream                           // Blob (2)
+	KwalletdEnumTypeMap                              // Map (3)
+	KwalletdEnumTypeUnused   = 0xffff                // 65535
 )
 
 // KWalletD Dbus interfaces.
@@ -147,7 +149,7 @@ const (
 
 		Deprecated: use DbusWMEntriesList instead.
 	*/
-	DbusWMReadEntryList string = DbusInterfaceWM + ".readEntryList"
+	// DbusWMReadEntryList string = DbusInterfaceWM + ".readEntryList"
 
 	// DbusWMReadMap returns a Map from a Folder (as a byteslice).
 	DbusWMReadMap string = DbusInterfaceWM + ".readMap"
@@ -157,7 +159,7 @@ const (
 
 		Deprecated: use DbusWMMapList instead.
 	*/
-	DbusWMReadMapList string = DbusInterfaceWM + ".readMapList"
+	// DbusWMReadMapList string = DbusInterfaceWM + ".readMapList"
 
 	// DbusWMReadPassword returns a Password from a Folder (as a byteslice).
 	DbusWMReadPassword string = DbusInterfaceWM + ".readPassword"
@@ -167,7 +169,7 @@ const (
 
 		Deprecated: use DbusWMPasswordList instead.
 	*/
-	DbusWMReadPasswordList string = DbusInterfaceWM + ".readPasswordList"
+	// DbusWMReadPasswordList string = DbusInterfaceWM + ".readPasswordList"
 
 	// DbusWMReconfigure is [FUNCTION UNKNOWN/UNDOCUMENTED; TODO? NOT IMPLEMENTED.]
 	// DbusWMReconfigure string = DbusInterfaceWM + ".reconfigure"

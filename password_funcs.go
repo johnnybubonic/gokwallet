@@ -37,7 +37,15 @@ func NewPassword(f *Folder, keyName string, recursion *RecurseOpts) (password *P
 // Update fetches a Password's Password.Value.
 func (p *Password) Update() (err error) {
 
-	// TODO.
+	var b []byte
+
+	if err = p.Dbus.Call(
+		DbusWMReadPassword, 0, p.folder.wallet.handle, p.folder.Name, p.Name, p.folder.wallet.wm.AppID,
+	).Store(&b); err != nil {
+		return
+	}
+
+	p.Value = string(b)
 
 	return
 }

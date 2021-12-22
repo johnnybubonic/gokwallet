@@ -1,5 +1,9 @@
 package gokwallet
 
+import (
+	"github.com/godbus/dbus/v5"
+)
+
 /*
 	NewUnknownItem returns an UnknownItem. It requires a RecurseOpts
 	(you can use DefaultRecurseOpts, call NewRecurseOpts, or provide your own RecurseOpts struct).
@@ -37,7 +41,15 @@ func NewUnknownItem(f *Folder, keyName string, recursion *RecurseOpts) (unknown 
 // Update fetches an UnknownItem's UnknownItem.Value.
 func (u *UnknownItem) Update() (err error) {
 
-	// TODO.
+	var v dbus.Variant
+
+	if err = u.Dbus.Call(
+		DbusWMReadEntry, 0, u.folder.wallet.handle, u.folder.Name, u.Name, u.folder.wallet.wm.AppID,
+	).Store(&v); err != nil {
+		return
+	}
+
+	u.Value = v.Value().([]byte)
 
 	return
 }

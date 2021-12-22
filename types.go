@@ -184,15 +184,14 @@ type Blob struct {
 
 /*
 	UnknownItem is a secret item of unknown classification, so there isn't exactly a good way of determining a type for UnknownItem.Value.
-	As such, its dbus.ObjectPath is used.
-	TODO: There may be a method to fetch the raw bytes of the object (such as one would use with Blob) in the future.
+	As such, its UnknownItem.Value is just raw bytes.
 */
 type UnknownItem struct {
 	*DbusObject
 	// Name is the name of this UnknownItem.
 	Name string `json:"name"`
 	// Value is the Dbus path of this UnknownItem.
-	Value dbus.ObjectPath `json:"value"`
+	Value []byte `json:"value"`
 	// Recurse contains the relevant RecurseOpts.
 	Recurse *RecurseOpts `json:"recurse_opts"`
 	// wm is the parent WalletManager that UnknownItem.folder.wallet was fetched from.

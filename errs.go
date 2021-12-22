@@ -23,4 +23,6 @@ var (
 	ErrNoCreate error = errors.New("failed to create an object")
 	// ErrNoDisconnect can occur if trying to disconnect a Wallet from a WalletManager/application and a failure occurs.
 	ErrNoDisconnect error = errors.New("failed to disconnect wallet from application")
+	// ErrInvalidMap will get triggered if a populated map[string]string (even an empty one) is expected but a nil is received.
+	ErrInvalidMap error = errors.New("invalid map; cannot be nil")
 )
