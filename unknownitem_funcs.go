@@ -38,6 +38,30 @@ func NewUnknownItem(f *Folder, keyName string, recursion *RecurseOpts) (unknown 
 	return
 }
 
+// Delete will delete this UnknownItem from its parent Folder. You may want to run Folder.UpdateUnknowns to update the existing map of UnknownItem items.
+func (u *UnknownItem) Delete() (err error) {
+
+	if err = u.folder.RemoveEntry(u.Name); err != nil {
+		return
+	}
+
+	u = nil
+
+	return
+}
+
+// SetValue will replace this UnknownItem's UnknownItem.Value.
+func (u *UnknownItem) SetValue(newValue []byte) (err error) {
+
+	if _, err = u.folder.WriteUnknown(u.Name, newValue); err != nil {
+		return
+	}
+
+	u.Value = newValue
+
+	return
+}
+
 // Update fetches an UnknownItem's UnknownItem.Value.
 func (u *UnknownItem) Update() (err error) {
 

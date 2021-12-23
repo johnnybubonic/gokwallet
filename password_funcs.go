@@ -34,6 +34,30 @@ func NewPassword(f *Folder, keyName string, recursion *RecurseOpts) (password *P
 	return
 }
 
+// Delete will delete this Password from its parent Folder. You may want to run Folder.UpdatePasswords to update the existing map of Password items.
+func (p *Password) Delete() (err error) {
+
+	if err = p.folder.RemoveEntry(p.Name); err != nil {
+		return
+	}
+
+	p = nil
+
+	return
+}
+
+// SetValue will replace this Password's Password.Value.
+func (p *Password) SetValue(newValue string) (err error) {
+
+	if _, err = p.folder.WritePassword(p.Name, newValue); err != nil {
+		return
+	}
+
+	p.Value = newValue
+
+	return
+}
+
 // Update fetches a Password's Password.Value.
 func (p *Password) Update() (err error) {
 

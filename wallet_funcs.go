@@ -179,6 +179,8 @@ func (w *Wallet) Delete() (err error) {
 
 	err = resultCheck(rslt)
 
+	w = nil
+
 	return
 }
 

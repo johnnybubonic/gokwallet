@@ -44,6 +44,21 @@ func NewFolder(w *Wallet, name string, recursion *RecurseOpts) (folder *Folder, 
 	return
 }
 
+/*
+	Delete will delete this Folder, and all its WalletItems, from the parent Wallet.
+	You may want to run Wallet.Update upon completion to update the Wallet.Folders cache if you're using it.
+*/
+func (f *Folder) Delete() (err error) {
+
+	if err = f.wallet.RemoveFolder(f.Name); err != nil {
+		return
+	}
+
+	f = nil
+
+	return
+}
+
 // HasEntry specifies if a Folder has an entry (WalletItem item) by the give entryName.
 func (f *Folder) HasEntry(entryName string) (hasEntry bool, err error) {
 
@@ -153,73 +168,6 @@ func (f *Folder) Update() (err error) {
 	return
 }
 
-// UpdatePasswords updates (populates) a Folder's Folder.Passwords.
-func (f *Folder) UpdatePasswords() (err error) {
-
-	var mapKeys []string
-	var variant dbus.Variant
-	var errs []error = make([]error, 0)
-
-	if !f.isInit {
-		err = ErrNotInitialized
-		return
-	}
-
-	if err = f.Dbus.Call(
-		DbusWMPasswordList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&variant); err != nil {
-		return
-	}
-
-	mapKeys = bytemapKeys(variant)
-
-	f.Passwords = make(map[string]*Password, len(mapKeys))
-
-	for _, k := range mapKeys {
-		if f.Passwords[k], err = NewPassword(f, k, f.Recurse); err != nil {
-			errs = append(errs, err)
-			err = nil
-		}
-	}
-
-	if errs != nil && len(errs) > 0 {
-		err = NewErrors(errs...)
-	}
-
-	return
-}
-
-// UpdateMaps updates (populates) a Folder's Folder.Maps.
-func (f *Folder) UpdateMaps() (err error) {
-
-	var mapKeys []string
-	var variant dbus.Variant
-	var errs []error = make([]error, 0)
-
-	if err = f.Dbus.Call(
-		DbusWMMapList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&variant); err != nil {
-		return
-	}
-
-	mapKeys = bytemapKeys(variant)
-
-	f.Maps = make(map[string]*Map, len(mapKeys))
-
-	for _, k := range mapKeys {
-		if f.Maps[k], err = NewMap(f, k, f.Recurse); err != nil {
-			errs = append(errs, err)
-			err = nil
-		}
-	}
-
-	if errs != nil && len(errs) > 0 {
-		err = NewErrors(errs...)
-	}
-
-	return
-}
-
 // UpdateBlobs updates (populates) a Folder's Folder.BinaryData.
 func (f *Folder) UpdateBlobs() (err error) {
 
@@ -256,6 +204,76 @@ func (f *Folder) UpdateBlobs() (err error) {
 		if f.BinaryData[k], err = NewBlob(f, k, f.Recurse); err != nil {
 			errs = append(errs, err)
 			err = nil
+			continue
+		}
+	}
+
+	if errs != nil && len(errs) > 0 {
+		err = NewErrors(errs...)
+	}
+
+	return
+}
+
+// UpdateMaps updates (populates) a Folder's Folder.Maps.
+func (f *Folder) UpdateMaps() (err error) {
+
+	var mapKeys []string
+	var variant dbus.Variant
+	var errs []error = make([]error, 0)
+
+	if err = f.Dbus.Call(
+		DbusWMMapList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
+	).Store(&variant); err != nil {
+		return
+	}
+
+	mapKeys = bytemapKeys(variant)
+
+	f.Maps = make(map[string]*Map, len(mapKeys))
+
+	for _, k := range mapKeys {
+		if f.Maps[k], err = NewMap(f, k, f.Recurse); err != nil {
+			errs = append(errs, err)
+			err = nil
+			continue
+		}
+	}
+
+	if errs != nil && len(errs) > 0 {
+		err = NewErrors(errs...)
+	}
+
+	return
+}
+
+// UpdatePasswords updates (populates) a Folder's Folder.Passwords.
+func (f *Folder) UpdatePasswords() (err error) {
+
+	var mapKeys []string
+	var variant dbus.Variant
+	var errs []error = make([]error, 0)
+
+	if !f.isInit {
+		err = ErrNotInitialized
+		return
+	}
+
+	if err = f.Dbus.Call(
+		DbusWMPasswordList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
+	).Store(&variant); err != nil {
+		return
+	}
+
+	mapKeys = bytemapKeys(variant)
+
+	f.Passwords = make(map[string]*Password, len(mapKeys))
+
+	for _, k := range mapKeys {
+		if f.Passwords[k], err = NewPassword(f, k, f.Recurse); err != nil {
+			errs = append(errs, err)
+			err = nil
+			continue
 		}
 	}
 
@@ -302,6 +320,7 @@ func (f *Folder) UpdateUnknowns() (err error) {
 		if f.Unknown[k], err = NewUnknownItem(f, k, f.Recurse); err != nil {
 			errs = append(errs, err)
 			err = nil
+			continue
 		}
 	}
 
@@ -313,9 +332,13 @@ func (f *Folder) UpdateUnknowns() (err error) {
 }
 
 // WriteBlob adds or replaces a Blob to/in a Folder.
-func (f *Folder) WriteBlob(entryName string, entryValue []byte) (err error) {
+func (f *Folder) WriteBlob(entryName string, entryValue []byte) (b *Blob, err error) {
 
 	if err = f.WriteEntry(entryName, KwalletdEnumTypeStream, entryValue); err != nil {
+		return
+	}
+
+	if b, err = NewBlob(f, entryName, f.Recurse); err != nil {
 		return
 	}
 
@@ -348,7 +371,7 @@ func (f *Folder) WriteEntry(entryName string, entryType kwalletdEnumType, entryV
 }
 
 // WriteMap adds or replaces a Map to/in a Folder.
-func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (err error) {
+func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (m *Map, err error) {
 
 	var rslt int32
 	var b []byte
@@ -365,11 +388,15 @@ func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (err e
 
 	err = resultCheck(rslt)
 
+	if m, err = NewMap(f, entryName, f.Recurse); err != nil {
+		return
+	}
+
 	return
 }
 
 // WritePassword adds or replaces a Password to/in a Folder.
-func (f *Folder) WritePassword(entryName, entryValue string) (err error) {
+func (f *Folder) WritePassword(entryName, entryValue string) (p *Password, err error) {
 
 	var rslt int32
 
@@ -381,13 +408,21 @@ func (f *Folder) WritePassword(entryName, entryValue string) (err error) {
 
 	err = resultCheck(rslt)
 
+	if p, err = NewPassword(f, entryName, f.Recurse); err != nil {
+		return
+	}
+
 	return
 }
 
 // WriteUnknown adds or replaces an UnknownItem to/in a Folder.
-func (f *Folder) WriteUnknown(entryName string, entryValue []byte) (err error) {
+func (f *Folder) WriteUnknown(entryName string, entryValue []byte) (u *UnknownItem, err error) {
 
 	if err = f.WriteEntry(entryName, KwalletdEnumTypeUnknown, entryValue); err != nil {
+		return
+	}
+
+	if u, err = NewUnknownItem(f, entryName, f.Recurse); err != nil {
 		return
 	}
 

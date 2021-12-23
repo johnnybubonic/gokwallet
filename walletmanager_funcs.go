@@ -36,7 +36,7 @@ func NewWalletManager(recursion *RecurseOpts, appID ...string) (wm *WalletManage
 	or provide your own RecurseOpts struct).
 	If appId is empty, DefaultAppID will be used as the app ID.
 */
-/* TODO: POC this before exposing. I have NO idea if it'll work.
+/* TODO: POC this before exposing. I have NO idea if/how it'll work.
 func NewWalletManagerFiles(recursion *RecurseOpts, appId string, filePaths ...string) (wm *WalletManager, err error) {
 
 	var exist bool

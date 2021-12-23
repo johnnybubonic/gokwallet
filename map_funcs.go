@@ -34,6 +34,30 @@ func NewMap(f *Folder, keyName string, recursion *RecurseOpts) (m *Map, err erro
 	return
 }
 
+// Delete will delete this Map from its parent Folder. You may want to run Folder.UpdateMaps to update the existing map of Map items.
+func (m *Map) Delete() (err error) {
+
+	if err = m.folder.RemoveEntry(m.Name); err != nil {
+		return
+	}
+
+	m = nil
+
+	return
+}
+
+// SetValue will replace this Map's Map.Value.
+func (m *Map) SetValue(newValue map[string]string) (err error) {
+
+	if _, err = m.folder.WriteMap(m.Name, newValue); err != nil {
+		return
+	}
+
+	m.Value = newValue
+
+	return
+}
+
 // Update fetches a Map's Map.Value.
 func (m *Map) Update() (err error) {
 

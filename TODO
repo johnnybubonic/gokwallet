@@ -2,8 +2,6 @@
 -- compat with kwalletmanager
 --- Will require conversion to different struct model.
 
-- Write* and Create*/New* methods
--- return relevant entry as native item
--- confirm i'm checking the result code for all of them.
+- walletCheck on all items' operations?
 
 - TESTS

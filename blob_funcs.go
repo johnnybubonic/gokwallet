@@ -38,6 +38,30 @@ func NewBlob(f *Folder, keyName string, recursion *RecurseOpts) (blob *Blob, err
 	return
 }
 
+// Delete will delete this Blob from its parent Folder. You may want to run Folder.UpdateBlobs to update the existing map of Blob items.
+func (b *Blob) Delete() (err error) {
+
+	if err = b.folder.RemoveEntry(b.Name); err != nil {
+		return
+	}
+
+	b = nil
+
+	return
+}
+
+// SetValue will replace this Blob's Blob.Value.
+func (b *Blob) SetValue(newValue []byte) (err error) {
+
+	if _, err = b.folder.WriteBlob(b.Name, newValue); err != nil {
+		return
+	}
+
+	b.Value = newValue
+
+	return
+}
+
 // Update fetches a Blob's Blob.Value.
 func (b *Blob) Update() (err error) {
 
