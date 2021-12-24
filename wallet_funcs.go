@@ -94,6 +94,10 @@ func (w *Wallet) ChangePassword() (err error) {
 
 	var call *dbus.Call
 
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
 	call = w.Dbus.Call(
 		DbusWMChangePassword, 0, w.Name, DefaultWindowID, w.wm.AppID,
 	)
@@ -189,6 +193,8 @@ func (w *Wallet) FolderExists(folderName string) (exists bool, err error) {
 
 	var notExists bool
 
+	// We don't need a walletcheck here since we don't need a handle.
+
 	if err = w.Dbus.Call(
 		DbusWMFolderNotExist, 0, w.Name, folderName,
 	).Store(&notExists); err != nil {
@@ -208,8 +214,7 @@ func (w *Wallet) ForceClose() (err error) {
 
 	var rslt int32
 
-	if !w.isInit {
-		err = ErrNotInitialized
+	if err = w.walletCheck(); err != nil {
 		return
 	}
 
@@ -228,6 +233,10 @@ func (w *Wallet) ForceClose() (err error) {
 // HasFolder indicates if a Wallet has a Folder in it named folderName.
 func (w *Wallet) HasFolder(folderName string) (hasFolder bool, err error) {
 
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
 	if err = w.Dbus.Call(
 		DbusWMHasFolder, 0, w.handle, folderName, w.wm.AppID,
 	).Store(&hasFolder); err != nil {
@@ -239,6 +248,8 @@ func (w *Wallet) HasFolder(folderName string) (hasFolder bool, err error) {
 
 // IsOpen returns whether a Wallet is open ("unlocked") or not (as well as updates Wallet.IsOpen).
 func (w *Wallet) IsOpen() (isOpen bool, err error) {
+
+	// We don't call walletcheck here because this method is called by a walletcheck.
 
 	// We can call the same method with w.handle instead of w.Name. We don't have a handler yet though.
 	if err = w.Dbus.Call(
@@ -276,7 +287,7 @@ func (w *Wallet) Open() (err error) {
 
 	var handler *int32
 
-	if _, err = w.IsOpen(); err != nil {
+	if err = w.walletCheck(); err != nil {
 		return
 	}
 
@@ -308,6 +319,10 @@ func (w *Wallet) RemoveFolder(folderName string) (err error) {
 
 	var success bool
 
+	if err = w.walletCheck(); err != nil {
+		return
+	}
+
 	if err = w.Dbus.Call(
 		DbusWMRemoveFolder, 0, w.handle, folderName, w.wm.AppID,
 	).Store(&success); err != nil {
@@ -327,6 +342,10 @@ func (w *Wallet) Update() (err error) {
 
 	var folderNames []string
 	var errs []error = make([]error, 0)
+
+	if err = w.walletCheck(); err != nil {
+		return
+	}
 
 	if folderNames, err = w.ListFolders(); err != nil {
 		return
