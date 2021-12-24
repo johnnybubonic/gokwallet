@@ -266,6 +266,8 @@ func newWM(appId string, recursion *RecurseOpts, filePaths ...string) (wm *Walle
 	}
 	wm.DbusObject.Dbus = wm.DbusObject.Conn.Object(DbusService, dbus.ObjectPath(DbusPath))
 
+	wm.isInit = true
+
 	if wm.Recurse.All || wm.Recurse.Wallets {
 		if err = wm.Update(); err != nil {
 			return
