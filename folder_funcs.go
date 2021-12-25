@@ -12,7 +12,7 @@ import (
 func NewFolder(w *Wallet, name string, recursion *RecurseOpts) (folder *Folder, err error) {
 
 	if !w.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWallet
 		return
 	}
 
@@ -28,6 +28,8 @@ func NewFolder(w *Wallet, name string, recursion *RecurseOpts) (folder *Folder, 
 		wallet:     w,
 		isInit:     false,
 	}
+
+	folder.isInit = true
 
 	if folder.Recurse.AllWalletItems ||
 		folder.Recurse.Passwords ||
@@ -62,9 +64,15 @@ func (f *Folder) Delete() (err error) {
 // HasEntry specifies if a Folder has an entry (WalletItem item) by the give entryName.
 func (f *Folder) HasEntry(entryName string) (hasEntry bool, err error) {
 
-	if err = f.Dbus.Call(
+	var call *dbus.Call
+
+	if call = f.Dbus.Call(
 		DbusWMHasEntry, 0, f.wallet.handle, f.Name, entryName, f.wallet.wm.AppID,
-	).Store(&hasEntry); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&hasEntry); err != nil {
 		return
 	}
 
@@ -78,9 +86,15 @@ func (f *Folder) HasEntry(entryName string) (hasEntry bool, err error) {
 */
 func (f *Folder) KeyNotExist(entryName string) (doesNotExist bool, err error) {
 
-	if err = f.Dbus.Call(
+	var call *dbus.Call
+
+	if call = f.Dbus.Call(
 		DbusWMKeyNotExist, 0, f.wallet.Name, f.Name, entryName,
-	).Store(&doesNotExist); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&doesNotExist); err != nil {
 		return
 	}
 
@@ -90,9 +104,15 @@ func (f *Folder) KeyNotExist(entryName string) (doesNotExist bool, err error) {
 // ListEntries lists all entries (WalletItem items) in a Folder (regardless of type) by name.
 func (f *Folder) ListEntries() (entryNames []string, err error) {
 
-	if err = f.Dbus.Call(
+	var call *dbus.Call
+
+	if call = f.Dbus.Call(
 		DbusWMEntryList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&entryNames); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&entryNames); err != nil {
 		return
 	}
 
@@ -102,11 +122,16 @@ func (f *Folder) ListEntries() (entryNames []string, err error) {
 // RemoveEntry removes a WalletItem from a Folder given its entryName (key).
 func (f *Folder) RemoveEntry(entryName string) (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMRemoveEntry, 0, f.wallet.handle, f.Name, entryName, f.wallet.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -118,11 +143,16 @@ func (f *Folder) RemoveEntry(entryName string) (err error) {
 // RenameEntry renames a WalletItem in a Folder from entryName to newEntryName.
 func (f *Folder) RenameEntry(entryName, newEntryName string) (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMRenameEntry, 0, f.wallet.handle, f.Name, entryName, newEntryName, f.wallet.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -171,19 +201,24 @@ func (f *Folder) Update() (err error) {
 // UpdateBlobs updates (populates) a Folder's Folder.BinaryData.
 func (f *Folder) UpdateBlobs() (err error) {
 
+	var call *dbus.Call
 	var mapKeys []string
 	var isBlob bool
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMEntriesList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&variant); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&variant); err != nil {
 		return
 	}
 
@@ -218,13 +253,18 @@ func (f *Folder) UpdateBlobs() (err error) {
 // UpdateMaps updates (populates) a Folder's Folder.Maps.
 func (f *Folder) UpdateMaps() (err error) {
 
+	var call *dbus.Call
 	var mapKeys []string
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMMapList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&variant); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&variant); err != nil {
 		return
 	}
 
@@ -250,18 +290,23 @@ func (f *Folder) UpdateMaps() (err error) {
 // UpdatePasswords updates (populates) a Folder's Folder.Passwords.
 func (f *Folder) UpdatePasswords() (err error) {
 
+	var call *dbus.Call
 	var mapKeys []string
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMPasswordList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&variant); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&variant); err != nil {
 		return
 	}
 
@@ -287,19 +332,24 @@ func (f *Folder) UpdatePasswords() (err error) {
 // UpdateUnknowns updates (populates) a Folder's Folder.Unknown.
 func (f *Folder) UpdateUnknowns() (err error) {
 
+	var call *dbus.Call
 	var mapKeys []string
 	var isUnknown bool
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMEntriesList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
-	).Store(&variant); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&variant); err != nil {
 		return
 	}
 
@@ -352,6 +402,7 @@ func (f *Folder) WriteBlob(entryName string, entryValue []byte) (b *Blob, err er
 */
 func (f *Folder) WriteEntry(entryName string, entryType kwalletdEnumType, entryValue []byte) (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
 	if entryType == KwalletdEnumTypeUnused {
@@ -359,9 +410,13 @@ func (f *Folder) WriteEntry(entryName string, entryType kwalletdEnumType, entryV
 		return
 	}
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMWriteEntry, 0, f.wallet.handle, f.Name, entryName, entryValue, int32(entryType), f.wallet.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -373,6 +428,7 @@ func (f *Folder) WriteEntry(entryName string, entryType kwalletdEnumType, entryV
 // WriteMap adds or replaces a Map to/in a Folder.
 func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (m *Map, err error) {
 
+	var call *dbus.Call
 	var rslt int32
 	var b []byte
 
@@ -380,9 +436,13 @@ func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (m *Ma
 		return
 	}
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMWriteMap, 0, f.wallet.handle, f.Name, entryName, b, f.wallet.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -398,11 +458,16 @@ func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (m *Ma
 // WritePassword adds or replaces a Password to/in a Folder.
 func (f *Folder) WritePassword(entryName, entryValue string) (p *Password, err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMWritePassword, 0, f.wallet.handle, f.Name, entryName, entryValue, f.wallet.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -432,11 +497,16 @@ func (f *Folder) WriteUnknown(entryName string, entryValue []byte) (u *UnknownIt
 // isType checks if a certain key keyName is of type typeCheck (via KwalletdEnumType*).
 func (f *Folder) isType(keyName string, typeCheck kwalletdEnumType) (isOfType bool, err error) {
 
+	var call *dbus.Call
 	var entryType int32
 
-	if err = f.Dbus.Call(
+	if call = f.Dbus.Call(
 		DbusWMEntryType, 0, f.wallet.handle, f.Name, keyName, f.wallet.wm.AppID,
-	).Store(&entryType); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&entryType); err != nil {
 		return
 	}
 

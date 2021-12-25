@@ -1,5 +1,9 @@
 package gokwallet
 
+import (
+	"github.com/godbus/dbus/v5"
+)
+
 /*
 	NewPassword returns a Password. It requires a RecurseOpts
 	(you can use DefaultRecurseOpts, call NewRecurseOpts, or provide your own RecurseOpts struct).
@@ -8,7 +12,7 @@ package gokwallet
 func NewPassword(f *Folder, keyName string, recursion *RecurseOpts) (password *Password, err error) {
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
@@ -22,6 +26,8 @@ func NewPassword(f *Folder, keyName string, recursion *RecurseOpts) (password *P
 		folder:  f,
 		isInit:  false,
 	}
+
+	password.isInit = true
 
 	if password.Recurse.AllWalletItems || password.Recurse.Passwords {
 		if err = password.Update(); err != nil {
@@ -61,11 +67,16 @@ func (p *Password) SetValue(newValue string) (err error) {
 // Update fetches a Password's Password.Value.
 func (p *Password) Update() (err error) {
 
+	var call *dbus.Call
 	var b []byte
 
-	if err = p.Dbus.Call(
+	if call = p.Dbus.Call(
 		DbusWMReadPassword, 0, p.folder.wallet.handle, p.folder.Name, p.Name, p.folder.wallet.wm.AppID,
-	).Store(&b); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&b); err != nil {
 		return
 	}
 

@@ -48,7 +48,7 @@ func (e *MultiError) Error() (errStr string) {
 
 	for idx, err := range e.Errors {
 		if (idx + 1) < numErrs {
-			errStr += fmt.Sprintf(err.Error(), e.ErrorSep)
+			errStr += fmt.Sprintf("%v%v", err.Error(), e.ErrorSep)
 		} else {
 			errStr += err.Error()
 		}

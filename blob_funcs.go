@@ -12,7 +12,7 @@ import (
 func NewBlob(f *Folder, keyName string, recursion *RecurseOpts) (blob *Blob, err error) {
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
@@ -26,6 +26,7 @@ func NewBlob(f *Folder, keyName string, recursion *RecurseOpts) (blob *Blob, err
 		folder:  f,
 		isInit:  false,
 	}
+	blob.isInit = true
 
 	if blob.Recurse.AllWalletItems || blob.Recurse.Blobs {
 		if err = blob.Update(); err != nil {
@@ -65,11 +66,16 @@ func (b *Blob) SetValue(newValue []byte) (err error) {
 // Update fetches a Blob's Blob.Value.
 func (b *Blob) Update() (err error) {
 
+	var call *dbus.Call
 	var v dbus.Variant
 
-	if err = b.Dbus.Call(
+	if call = b.Dbus.Call(
 		DbusWMReadEntry, 0, b.folder.wallet.handle, b.folder.Name, b.Name, b.folder.wallet.wm.AppID,
-	).Store(&v); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&v); err != nil {
 		return
 	}
 

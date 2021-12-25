@@ -86,8 +86,10 @@ type Wallet struct {
 	wm *WalletManager
 	// handle is this Wallet's handler number.
 	handle int32
-	// isInit flags whether this is "properly" set up (i.e. has a handle).
+	// isInit flags whether this is "properly" set up.
 	isInit bool
+	// hasHandle specifies if this Wallet's Wallet.handle has been explicitly set yet.
+	hasHandle bool
 }
 
 // Folder contains secret object collections of Password, Map, Blob, and UnknownItem objects.

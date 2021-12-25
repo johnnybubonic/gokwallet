@@ -12,7 +12,7 @@ import (
 func NewWallet(wm *WalletManager, name string, recursion *RecurseOpts) (wallet *Wallet, err error) {
 
 	if !wm.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWM
 		return
 	}
 
@@ -25,6 +25,8 @@ func NewWallet(wm *WalletManager, name string, recursion *RecurseOpts) (wallet *
 		// handle:     0,
 		isInit: false,
 	}
+
+	wallet.isInit = true
 
 	// TODO: remove this and leave to caller, since it might use PamOpen instead? Fail back to it?
 	if err = wallet.walletCheck(); err != nil {
@@ -45,15 +47,20 @@ func NewWallet(wm *WalletManager, name string, recursion *RecurseOpts) (wallet *
 // Disconnect disconnects this Wallet from its parent WalletManager.
 func (w *Wallet) Disconnect() (err error) {
 
+	var call *dbus.Call
 	var ok bool
 
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMDisconnectApp, 0, w.Name, w.wm.AppID,
-	).Store(&ok); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&ok); err != nil {
 		return
 	}
 
@@ -67,15 +74,20 @@ func (w *Wallet) Disconnect() (err error) {
 // DisconnectApplication disconnects this Wallet from a specified WalletManager/application (see Wallet.Connections).
 func (w *Wallet) DisconnectApplication(appName string) (err error) {
 
+	var call *dbus.Call
 	var ok bool
 
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMDisconnectApp, 0, appName, w.wm.AppID,
-	).Store(&ok); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&ok); err != nil {
 		return
 	}
 
@@ -88,7 +100,8 @@ func (w *Wallet) DisconnectApplication(appName string) (err error) {
 
 /*
 	ChangePassword will change (or set) the password for a Wallet.
-	Note that this *must* be done via the windowing layer.
+	Note that this *must* be done via the windowing/graphical layer.
+	There is no way to change a Wallet's password via the Dbus API.
 */
 func (w *Wallet) ChangePassword() (err error) {
 
@@ -98,11 +111,12 @@ func (w *Wallet) ChangePassword() (err error) {
 		return
 	}
 
-	call = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMChangePassword, 0, w.Name, DefaultWindowID, w.wm.AppID,
-	)
-
-	err = call.Err
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
 
 	return
 }
@@ -110,6 +124,7 @@ func (w *Wallet) ChangePassword() (err error) {
 // Close closes a Wallet.
 func (w *Wallet) Close() (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
 	if err = w.walletCheck(); err != nil {
@@ -117,9 +132,13 @@ func (w *Wallet) Close() (err error) {
 	}
 
 	// Using a handler allows us to close access for this particular parent WalletManager.
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMClose, 0, w.handle, false, w.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -131,13 +150,19 @@ func (w *Wallet) Close() (err error) {
 // Connections lists the application names for connections to ("users of") this Wallet.
 func (w *Wallet) Connections() (connList []string, err error) {
 
+	var call *dbus.Call
+
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMUsers, 0, w.Name,
-	).Store(&connList); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&connList); err != nil {
 		return
 	}
 
@@ -147,15 +172,20 @@ func (w *Wallet) Connections() (connList []string, err error) {
 // CreateFolder creates a new Folder in a Wallet.
 func (w *Wallet) CreateFolder(name string) (err error) {
 
+	var call *dbus.Call
 	var ok bool
 
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMCreateFolder, 0, w.handle, name, w.wm.AppID,
-	).Store(&ok); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&ok); err != nil {
 		return
 	}
 
@@ -169,15 +199,20 @@ func (w *Wallet) CreateFolder(name string) (err error) {
 // Delete deletes a Wallet.
 func (w *Wallet) Delete() (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMDeleteWallet, 0, w.Name,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -191,13 +226,18 @@ func (w *Wallet) Delete() (err error) {
 // FolderExists indicates if a Folder exists in a Wallet or not.
 func (w *Wallet) FolderExists(folderName string) (exists bool, err error) {
 
+	var call *dbus.Call
 	var notExists bool
 
 	// We don't need a walletcheck here since we don't need a handle.
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMFolderNotExist, 0, w.Name, folderName,
-	).Store(&notExists); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&notExists); err != nil {
 		return
 	}
 
@@ -212,6 +252,7 @@ func (w *Wallet) FolderExists(folderName string) (exists bool, err error) {
 */
 func (w *Wallet) ForceClose() (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
 	if err = w.walletCheck(); err != nil {
@@ -219,9 +260,13 @@ func (w *Wallet) ForceClose() (err error) {
 	}
 
 	// Using a handler allows us to close access for this particular parent WalletManager.
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMClose, 0, w.handle, true, w.wm.AppID,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -233,13 +278,19 @@ func (w *Wallet) ForceClose() (err error) {
 // HasFolder indicates if a Wallet has a Folder in it named folderName.
 func (w *Wallet) HasFolder(folderName string) (hasFolder bool, err error) {
 
+	var call *dbus.Call
+
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMHasFolder, 0, w.handle, folderName, w.wm.AppID,
-	).Store(&hasFolder); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&hasFolder); err != nil {
 		return
 	}
 
@@ -249,12 +300,22 @@ func (w *Wallet) HasFolder(folderName string) (hasFolder bool, err error) {
 // IsOpen returns whether a Wallet is open ("unlocked") or not (as well as updates Wallet.IsOpen).
 func (w *Wallet) IsOpen() (isOpen bool, err error) {
 
+	var call *dbus.Call
+
 	// We don't call walletcheck here because this method is called by a walletcheck.
+	if !w.isInit {
+		err = ErrInitWallet
+		return
+	}
 
 	// We can call the same method with w.handle instead of w.Name. We don't have a handler yet though.
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMIsOpen, 0, w.Name,
-	).Store(&w.IsUnlocked); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&w.IsUnlocked); err != nil {
 		return
 	}
 
@@ -266,13 +327,19 @@ func (w *Wallet) IsOpen() (isOpen bool, err error) {
 // ListFolders lists all Folder names in a Wallet.
 func (w *Wallet) ListFolders() (folderList []string, err error) {
 
+	var call *dbus.Call
+
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMFolderList, 0, w.handle, w.wm.AppID,
-	).Store(&folderList); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&folderList); err != nil {
 		return
 	}
 
@@ -285,27 +352,35 @@ func (w *Wallet) ListFolders() (folderList []string, err error) {
 */
 func (w *Wallet) Open() (err error) {
 
-	var handler *int32
+	var call *dbus.Call
+	var handler *int32 = new(int32)
 
-	if err = w.walletCheck(); err != nil {
+	// We don't call walletcheck here because this method is called by a walletcheck.
+	if !w.isInit {
+		err = ErrInitWallet
 		return
 	}
 
-	if !w.IsUnlocked {
-		if err = w.Dbus.Call(
-			DbusWMOpen, 0,
-		).Store(handler); err != nil {
+	if !w.IsUnlocked || !w.hasHandle {
+		if call = w.Dbus.Call(
+			DbusWMOpen, 0, w.Name, DefaultWindowID, w.wm.AppID,
+		); call.Err != nil {
+			err = call.Err
+			return
+		}
+		if err = call.Store(handler); err != nil {
 			return
 		}
 	}
 
 	if handler == nil {
-		err = ErrOperationFailed
+		err = ErrDbusOpfailNoHandle
 		return
 	} else {
 		w.handle = *handler
 	}
 
+	w.hasHandle = true
 	w.IsUnlocked = true
 
 	return
@@ -317,20 +392,25 @@ func (w *Wallet) Open() (err error) {
 */
 func (w *Wallet) RemoveFolder(folderName string) (err error) {
 
+	var call *dbus.Call
 	var success bool
 
 	if err = w.walletCheck(); err != nil {
 		return
 	}
 
-	if err = w.Dbus.Call(
+	if call = w.Dbus.Call(
 		DbusWMRemoveFolder, 0, w.handle, folderName, w.wm.AppID,
-	).Store(&success); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&success); err != nil {
 		return
 	}
 
 	if !success {
-		err = ErrOperationFailed
+		err = ErrDbusOpfailRemoveFolder
 		return
 	}
 
@@ -373,7 +453,7 @@ func (w *Wallet) Update() (err error) {
 func (w *Wallet) walletCheck() (err error) {
 
 	if !w.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWallet
 		return
 	}
 
@@ -381,7 +461,7 @@ func (w *Wallet) walletCheck() (err error) {
 		return
 	}
 
-	if !w.IsUnlocked {
+	if !w.IsUnlocked || !w.hasHandle {
 		if err = w.Open(); err != nil {
 			return
 		}

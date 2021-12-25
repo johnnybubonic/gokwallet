@@ -2,6 +2,8 @@
 -- compat with kwalletmanager
 --- Will require conversion to different struct model.
 
-- walletCheck on all items' operations?
+- walletCheck on all items' and folders' operations?
+
+- close Dbus.Conn
 
 - TESTS

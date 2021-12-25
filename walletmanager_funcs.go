@@ -80,17 +80,23 @@ func NewWalletManagerFiles(recursion *RecurseOpts, appId string, filePaths ...st
 	for the specified Wallet - not just this WalletManager.
 */
 func (wm *WalletManager) CloseWallet(walletName string) (err error) {
+
+	var call *dbus.Call
 	var rslt int32
 
 	if !wm.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWM
 		return
 	}
 
 	// Using a handler allows us to close access for this particular parent WalletManager.
-	if err = wm.Dbus.Call(
+	if call = wm.Dbus.Call(
 		DbusWMClose, 0, walletName, false,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -106,17 +112,22 @@ func (wm *WalletManager) CloseWallet(walletName string) (err error) {
 */
 func (wm *WalletManager) ForceCloseWallet(walletName string) (err error) {
 
+	var call *dbus.Call
 	var rslt int32
 
 	if !wm.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWM
 		return
 	}
 
 	// Using a handler allows us to close access for this particular parent WalletManager.
-	if err = wm.Dbus.Call(
+	if call = wm.Dbus.Call(
 		DbusWMClose, 0, walletName, false,
-	).Store(&rslt); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&rslt); err != nil {
 		return
 	}
 
@@ -125,20 +136,25 @@ func (wm *WalletManager) ForceCloseWallet(walletName string) (err error) {
 	return
 }
 
-// CloseAllWallets closes all Wallet objects. They do *not* need to be part of WalletManager.Wallets.
+/*
+	CloseAllWallets closes all Wallet objects. They do *not* need to be part of WalletManager.Wallets.
+	"All wallets" really means *all* wallets.
+*/
 func (wm *WalletManager) CloseAllWallets() (err error) {
 
 	var call *dbus.Call
 
 	if !wm.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWM
 		return
 	}
 
-	call = wm.Dbus.Call(
+	if call = wm.Dbus.Call(
 		DbusWMCloseAllWallets, 0,
-	)
-	err = call.Err
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
 
 	return
 }
@@ -146,14 +162,20 @@ func (wm *WalletManager) CloseAllWallets() (err error) {
 // IsEnabled returns whether KWallet is enabled or not (and also updates WalletManager.Enabled).
 func (wm *WalletManager) IsEnabled() (enabled bool, err error) {
 
+	var call *dbus.Call
+
 	if !wm.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWM
 		return
 	}
 
-	if err = wm.Dbus.Call(
+	if call = wm.Dbus.Call(
 		DbusWMIsEnabled, 0,
-	).Store(&wm.Enabled); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&wm.Enabled); err != nil {
 		return
 	}
 
@@ -165,11 +187,21 @@ func (wm *WalletManager) IsEnabled() (enabled bool, err error) {
 // LocalWallet returns the "local" wallet (and updates WalletManager.Local).
 func (wm *WalletManager) LocalWallet() (w *Wallet, err error) {
 
+	var call *dbus.Call
 	var wn string
 
-	if err = wm.Dbus.Call(
+	if !wm.isInit {
+		err = ErrInitWM
+		return
+	}
+
+	if call = wm.Dbus.Call(
 		DbusWMLocalWallet, 0,
-	).Store(&wn); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&wn); err != nil {
 		return
 	}
 
@@ -185,11 +217,21 @@ func (wm *WalletManager) LocalWallet() (w *Wallet, err error) {
 // NetworkWallet returns the "network" wallet (and updates WalletManager.Network).
 func (wm *WalletManager) NetworkWallet() (w *Wallet, err error) {
 
+	var call *dbus.Call
 	var wn string
 
-	if err = wm.Dbus.Call(
+	if !wm.isInit {
+		err = ErrInitWM
+		return
+	}
+
+	if call = wm.Dbus.Call(
 		DbusWMNetWallet, 0,
-	).Store(&wn); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&wn); err != nil {
 		return
 	}
 
@@ -205,9 +247,15 @@ func (wm *WalletManager) NetworkWallet() (w *Wallet, err error) {
 // WalletNames returns a list of existing Wallet names.
 func (wm *WalletManager) WalletNames() (wallets []string, err error) {
 
-	if err = wm.Dbus.Call(
+	var call *dbus.Call
+
+	if call = wm.Dbus.Call(
 		DbusWMWallets, 0,
-	).Store(&wallets); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&wallets); err != nil {
 		return
 	}
 
@@ -221,7 +269,7 @@ func (wm *WalletManager) Update() (err error) {
 	var errs []error = make([]error, 0)
 
 	if !wm.isInit {
-		err = ErrNotInitialized
+		err = ErrInitWM
 		return
 	}
 
@@ -267,6 +315,10 @@ func newWM(appId string, recursion *RecurseOpts, filePaths ...string) (wm *Walle
 	wm.DbusObject.Dbus = wm.DbusObject.Conn.Object(DbusService, dbus.ObjectPath(DbusPath))
 
 	wm.isInit = true
+
+	if _, err = wm.IsEnabled(); err != nil {
+		return
+	}
 
 	if wm.Recurse.All || wm.Recurse.Wallets {
 		if err = wm.Update(); err != nil {

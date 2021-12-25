@@ -1,5 +1,9 @@
 package gokwallet
 
+import (
+	"github.com/godbus/dbus/v5"
+)
+
 /*
 	NewMap returns a Map. It requires a RecurseOpts
 	(you can use DefaultRecurseOpts, call NewRecurseOpts, or provide your own RecurseOpts struct).
@@ -8,7 +12,7 @@ package gokwallet
 func NewMap(f *Folder, keyName string, recursion *RecurseOpts) (m *Map, err error) {
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
@@ -22,6 +26,8 @@ func NewMap(f *Folder, keyName string, recursion *RecurseOpts) (m *Map, err erro
 		folder:  f,
 		isInit:  false,
 	}
+
+	m.isInit = true
 
 	if m.Recurse.AllWalletItems || m.Recurse.Maps {
 		if err = m.Update(); err != nil {
@@ -61,11 +67,16 @@ func (m *Map) SetValue(newValue map[string]string) (err error) {
 // Update fetches a Map's Map.Value.
 func (m *Map) Update() (err error) {
 
+	var call *dbus.Call
 	var b []byte
 
-	if err = m.Dbus.Call(
+	if call = m.Dbus.Call(
 		DbusWMReadMap, 0, m.folder.wallet.handle, m.folder.Name, m.Name, m.folder.wallet.wm.AppID,
-	).Store(&b); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&b); err != nil {
 		return
 	}
 

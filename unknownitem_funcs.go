@@ -12,7 +12,7 @@ import (
 func NewUnknownItem(f *Folder, keyName string, recursion *RecurseOpts) (unknown *UnknownItem, err error) {
 
 	if !f.isInit {
-		err = ErrNotInitialized
+		err = ErrInitFolder
 		return
 	}
 
@@ -26,6 +26,8 @@ func NewUnknownItem(f *Folder, keyName string, recursion *RecurseOpts) (unknown 
 		folder:  f,
 		isInit:  false,
 	}
+
+	unknown.isInit = true
 
 	if unknown.Recurse.AllWalletItems || unknown.Recurse.UnknownItems {
 		if err = unknown.Update(); err != nil {
@@ -65,11 +67,16 @@ func (u *UnknownItem) SetValue(newValue []byte) (err error) {
 // Update fetches an UnknownItem's UnknownItem.Value.
 func (u *UnknownItem) Update() (err error) {
 
+	var call *dbus.Call
 	var v dbus.Variant
 
-	if err = u.Dbus.Call(
+	if call = u.Dbus.Call(
 		DbusWMReadEntry, 0, u.folder.wallet.handle, u.folder.Name, u.Name, u.folder.wallet.wm.AppID,
-	).Store(&v); err != nil {
+	); call.Err != nil {
+		err = call.Err
+		return
+	}
+	if err = call.Store(&v); err != nil {
 		return
 	}
 
