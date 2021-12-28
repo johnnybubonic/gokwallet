@@ -87,6 +87,7 @@ func (f *Folder) HasEntry(entryName string) (hasEntry bool, err error) {
 	KeyNotExist returns true if a key/entry name entryName does *not* exist.
 	Essentially the same as Folder.HasEntry, but whereas Folder.HasEntry requires the parent wallet
 	to be open/unlocked, Folder.KeyNotExist does not require this.
+	However, it's prone to somewhat unreliable results; it's best to use Folder.HasEntry wherever/whenever possible.
 */
 func (f *Folder) KeyNotExist(entryName string) (doesNotExist bool, err error) {
 

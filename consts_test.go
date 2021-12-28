@@ -13,6 +13,7 @@ const (
 // Identifiers/names/keys.
 var (
 	walletTest         uuid.UUID = uuid.New()
+	walletTestAlt      uuid.UUID = uuid.New()
 	folderTest         uuid.UUID = uuid.New()
 	blobTest           uuid.UUID = uuid.New()
 	mapTest            uuid.UUID = uuid.New()

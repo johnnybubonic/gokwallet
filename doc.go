@@ -12,6 +12,8 @@ While there is a pull request in place, it has not yet been merged in (and it ma
 distributions incorporate that version). However, when that time comes I highly recommend using my `gosecret`
 library to interface with that (module r00t2.io/gosecret; see https://pkg.go.dev/r00t2.io/gosecret).
 
+KWallet Concepts
+
 KWallet has the following structure (modified slightly to reflect this library):
 
 - A main Dbus service interface ("org.kde.kwalletd5"), WalletManager, allows one to retrieve and operate on/with Wallet items.
@@ -75,5 +77,43 @@ Additionally, use either https://pkg.go.dev/r00t2.io/gokwallet or https://pkg.go
 
 You most likely do *not* want to call any New<object> function directly;
 NewWalletManager with its RecurseOpts parameter (`recursion`) should get you everything you want/need.
+
+Here's a quick demonstration:
+
+	package main
+
+	import (
+		`fmt`
+		`log`
+
+		`r00t2.io/gokwallet`
+	)
+
+	func main() {
+
+		var err error
+		var r *gokwallet.RecurseOpts
+		var wm *gokwallet.WalletManager
+		var w *gokwallet.Wallet
+		var f *gokwallet.Folder
+		var p *gokwallet.Password
+
+		r = gokwallet.DefaultRecurseOpts
+		r.AllWalletItems = true
+
+		if wm, err = gokwallet.NewWalletManager(r, "ExampleKWalletApplication"); err != nil {
+			log.Panicln(err)
+		}
+
+		w = wm.Wallets["kdewallet"]
+
+		f = w.Folders["Passwords"]
+
+		if p, err = f.WritePassword("test_password", "this is a test password"); err != nil {
+			log.Panicln(err)
+		}
+
+		fmt.Println(p.Value)
+	}
 */
 package gokwallet

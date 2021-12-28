@@ -155,14 +155,14 @@ func mapToBytes(m map[string]string) (raw []byte, err error) {
 		if err = binary.Write(buf, binary.BigEndian, &kLen); err != nil {
 			return
 		}
-		if err = binary.Write(buf, binary.BigEndian, &k); err != nil {
+		if err = binary.Write(buf, binary.BigEndian, &kB); err != nil {
 			return
 		}
 
 		if err = binary.Write(buf, binary.BigEndian, &vLen); err != nil {
 			return
 		}
-		if err = binary.Write(buf, binary.BigEndian, &v); err != nil {
+		if err = binary.Write(buf, binary.BigEndian, &vB); err != nil {
 			return
 		}
 	}

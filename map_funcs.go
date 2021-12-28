@@ -96,6 +96,8 @@ func (m *Map) Update() (err error) {
 		return
 	}
 
+	m.Value = make(map[string]string, 0)
+
 	if call = m.Dbus.Call(
 		DbusWMReadMap, 0, m.folder.wallet.handle, m.folder.Name, m.Name, m.folder.wallet.wm.AppID,
 	); call.Err != nil {
@@ -106,8 +108,10 @@ func (m *Map) Update() (err error) {
 		return
 	}
 
-	if m.Value, _, err = bytesToMap(b); err != nil {
-		return
+	if len(b) != 0 {
+		if m.Value, _, err = bytesToMap(b); err != nil {
+			return
+		}
 	}
 
 	return

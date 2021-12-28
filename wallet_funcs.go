@@ -85,7 +85,7 @@ func (w *Wallet) DisconnectApplication(appName string) (err error) {
 	}
 
 	if call = w.Dbus.Call(
-		DbusWMDisconnectApp, 0, appName, w.wm.AppID,
+		DbusWMDisconnectApp, 0, w.Name, appName,
 	); call.Err != nil {
 		err = call.Err
 		return

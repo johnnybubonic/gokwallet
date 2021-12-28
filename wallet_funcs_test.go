@@ -11,8 +11,10 @@ func TestWallet(t *testing.T) {
 	var b bool
 	var conns []string
 	var folders []string
+	var wallets []string
 	var r *RecurseOpts = DefaultRecurseOpts
 	var wm *WalletManager
+	var wm2 *WalletManager
 	var w *Wallet
 	var w2 *Wallet
 
@@ -23,18 +25,35 @@ func TestWallet(t *testing.T) {
 	}
 	defer wm.Close()
 
+	if wm2, err = NewWalletManager(r, appIdTestAlt); err != nil {
+		t.Fatalf("failed to get WalletManager '%v' for TestWallet: %v", appIdTest, err)
+	}
+	defer wm2.Close()
+
 	if w, err = NewWallet(wm, walletTest.String(), r); err != nil {
 		t.Fatalf("failed to get Wallet '%v:%v' for TestWallet: %v", appIdTest, walletTest.String(), err)
 	}
+	defer w.Delete()
 	defer w.Disconnect()
 
 	// We test Disconnect above but we also need to test explicit disconnect by application name.
-	if w2, err = NewWallet(wm, walletTest.String(), r); err != nil {
-		t.Fatalf("failed to get Wallet '%v:%v' for TestWallet: %v", appIdTestAlt, walletTest.String(), err)
+	if w2, err = NewWallet(wm2, walletTestAlt.String(), r); err != nil {
+		t.Fatalf("failed to get Wallet '%v:%v' for TestWallet: %v", appIdTestAlt, walletTestAlt.String(), err)
 	}
-	if err = w2.DisconnectApplication(appIdTest); err != nil {
+	defer w2.Delete()
+
+	if wallets, err = wm.WalletNames(); err != nil {
+		t.Errorf("failure when getting wallet names for '%v': %v", appIdTest, err)
+	} else {
+		t.Logf("wallet names found via %v: %#v", appIdTest, wallets)
+	}
+
+	if w2, err = NewWallet(wm, walletTestAlt.String(), r); err != nil {
+		t.Errorf("could not open '%v' in '%v': %v", walletTestAlt.String(), appIdTest, err)
+	}
+	if err = w2.DisconnectApplication(appIdTestAlt); err != nil {
 		t.Errorf(
-			"failed to execute DisconnectApplication for '%v:%v' successfully: %v", appIdTestAlt, walletTest.String(), err,
+			"failed to execute DisconnectApplication for '%v:%v' successfully: %v", appIdTestAlt, walletTestAlt.String(), err,
 		)
 	}
 
@@ -80,7 +99,7 @@ func TestWallet(t *testing.T) {
 	if folders, err = w.ListFolders(); err != nil {
 		t.Errorf("error when running ListFolders for wallet '%v:%v': %v", appIdTest, walletTest.String(), err)
 	} else {
-		t.Logf("ListFolders returned for wallet '%v:%v': %v", appIdTest, walletTest.String(), folders)
+		t.Logf("ListFolders returned for wallet '%v:%v': %#v", appIdTest, walletTest.String(), folders)
 	}
 
 	if err = w.RemoveFolder(folderTest.String()); err != nil {
