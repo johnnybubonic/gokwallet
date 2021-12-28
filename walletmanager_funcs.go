@@ -75,6 +75,20 @@ func NewWalletManagerFiles(recursion *RecurseOpts, appId string, filePaths ...st
 */
 
 /*
+	Close closes the Dbus connection.
+	This does NOT close wallets; use WalletManager.CloseWallet, WalletManager.ForceCloseWallet, or
+	WalletManager.CloseAllWallets instead for that.
+*/
+func (wm *WalletManager) Close() (err error) {
+
+	if err = wm.Conn.Close(); err != nil {
+		return
+	}
+
+	return
+}
+
+/*
 	CloseWallet closes a Wallet.
 	Unlike Wallet.Close, this closes access for ALL applications/WalletManagers
 	for the specified Wallet - not just this WalletManager.

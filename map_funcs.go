@@ -52,6 +52,28 @@ func (m *Map) Delete() (err error) {
 	return
 }
 
+// Exists returns true if this Map actually exists.
+func (m *Map) Exists() (exists bool, err error) {
+
+	if exists, err = m.folder.HasEntry(m.Name); err != nil {
+		return
+	}
+
+	return
+}
+
+// Rename renames this Map (changes its key).
+func (m *Map) Rename(newName string) (err error) {
+
+	if err = m.folder.RenameEntry(m.Name, newName); err != nil {
+		return
+	}
+
+	m.Name = newName
+
+	return
+}
+
 // SetValue will replace this Map's Map.Value.
 func (m *Map) SetValue(newValue map[string]string) (err error) {
 
@@ -69,6 +91,10 @@ func (m *Map) Update() (err error) {
 
 	var call *dbus.Call
 	var b []byte
+
+	if err = m.folder.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = m.Dbus.Call(
 		DbusWMReadMap, 0, m.folder.wallet.handle, m.folder.Name, m.Name, m.folder.wallet.wm.AppID,

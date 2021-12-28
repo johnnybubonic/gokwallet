@@ -66,6 +66,10 @@ func (f *Folder) HasEntry(entryName string) (hasEntry bool, err error) {
 
 	var call *dbus.Call
 
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
+
 	if call = f.Dbus.Call(
 		DbusWMHasEntry, 0, f.wallet.handle, f.Name, entryName, f.wallet.wm.AppID,
 	); call.Err != nil {
@@ -88,6 +92,10 @@ func (f *Folder) KeyNotExist(entryName string) (doesNotExist bool, err error) {
 
 	var call *dbus.Call
 
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
+
 	if call = f.Dbus.Call(
 		DbusWMKeyNotExist, 0, f.wallet.Name, f.Name, entryName,
 	); call.Err != nil {
@@ -105,6 +113,10 @@ func (f *Folder) KeyNotExist(entryName string) (doesNotExist bool, err error) {
 func (f *Folder) ListEntries() (entryNames []string, err error) {
 
 	var call *dbus.Call
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = f.Dbus.Call(
 		DbusWMEntryList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
@@ -124,6 +136,10 @@ func (f *Folder) RemoveEntry(entryName string) (err error) {
 
 	var call *dbus.Call
 	var rslt int32
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = f.Dbus.Call(
 		DbusWMRemoveEntry, 0, f.wallet.handle, f.Name, entryName, f.wallet.wm.AppID,
@@ -145,6 +161,10 @@ func (f *Folder) RenameEntry(entryName, newEntryName string) (err error) {
 
 	var call *dbus.Call
 	var rslt int32
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = f.Dbus.Call(
 		DbusWMRenameEntry, 0, f.wallet.handle, f.Name, entryName, newEntryName, f.wallet.wm.AppID,
@@ -207,6 +227,10 @@ func (f *Folder) UpdateBlobs() (err error) {
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
 
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
+
 	if !f.isInit {
 		err = ErrInitFolder
 		return
@@ -258,6 +282,10 @@ func (f *Folder) UpdateMaps() (err error) {
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
 
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
+
 	if call = f.Dbus.Call(
 		DbusWMMapList, 0, f.wallet.handle, f.Name, f.wallet.wm.AppID,
 	); call.Err != nil {
@@ -294,6 +322,10 @@ func (f *Folder) UpdatePasswords() (err error) {
 	var mapKeys []string
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if !f.isInit {
 		err = ErrInitFolder
@@ -337,6 +369,10 @@ func (f *Folder) UpdateUnknowns() (err error) {
 	var isUnknown bool
 	var variant dbus.Variant
 	var errs []error = make([]error, 0)
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if !f.isInit {
 		err = ErrInitFolder
@@ -405,6 +441,10 @@ func (f *Folder) WriteEntry(entryName string, entryType kwalletdEnumType, entryV
 	var call *dbus.Call
 	var rslt int32
 
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
+
 	if entryType == KwalletdEnumTypeUnused {
 		err = ErrNoCreate
 		return
@@ -431,6 +471,10 @@ func (f *Folder) WriteMap(entryName string, entryValue map[string]string) (m *Ma
 	var call *dbus.Call
 	var rslt int32
 	var b []byte
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if b, err = mapToBytes(entryValue); err != nil {
 		return
@@ -461,6 +505,10 @@ func (f *Folder) WritePassword(entryName, entryValue string) (p *Password, err e
 	var call *dbus.Call
 	var rslt int32
 
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
+
 	if call = f.Dbus.Call(
 		DbusWMWritePassword, 0, f.wallet.handle, f.Name, entryName, entryValue, f.wallet.wm.AppID,
 	); call.Err != nil {
@@ -482,6 +530,10 @@ func (f *Folder) WritePassword(entryName, entryValue string) (p *Password, err e
 
 // WriteUnknown adds or replaces an UnknownItem to/in a Folder.
 func (f *Folder) WriteUnknown(entryName string, entryValue []byte) (u *UnknownItem, err error) {
+
+	if err = f.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if err = f.WriteEntry(entryName, KwalletdEnumTypeUnknown, entryValue); err != nil {
 		return

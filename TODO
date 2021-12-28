@@ -1,9 +1,3 @@
 - XML import/export?
 -- compat with kwalletmanager
 --- Will require conversion to different struct model.
-
-- walletCheck on all items' and folders' operations?
-
-- close Dbus.Conn
-
-- TESTS

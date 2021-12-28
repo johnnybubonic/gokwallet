@@ -52,6 +52,28 @@ func (p *Password) Delete() (err error) {
 	return
 }
 
+// Exists returns true if this Password actually exists.
+func (p *Password) Exists() (exists bool, err error) {
+
+	if exists, err = p.folder.HasEntry(p.Name); err != nil {
+		return
+	}
+
+	return
+}
+
+// Rename renames this Password (changes its key).
+func (p *Password) Rename(newName string) (err error) {
+
+	if err = p.folder.RenameEntry(p.Name, newName); err != nil {
+		return
+	}
+
+	p.Name = newName
+
+	return
+}
+
 // SetValue will replace this Password's Password.Value.
 func (p *Password) SetValue(newValue string) (err error) {
 
@@ -69,6 +91,10 @@ func (p *Password) Update() (err error) {
 
 	var call *dbus.Call
 	var b []byte
+
+	if err = p.folder.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = p.Dbus.Call(
 		DbusWMReadPassword, 0, p.folder.wallet.handle, p.folder.Name, p.Name, p.folder.wallet.wm.AppID,

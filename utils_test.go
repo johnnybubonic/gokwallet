@@ -4,24 +4,57 @@ import (
 	"testing"
 )
 
-func getTestEnv(t *testing.T) (wm *WalletManager, w *Wallet, f *Folder, err error) {
+func getTestEnv(t *testing.T) (e *testEnv, err error) {
 
-	var r *RecurseOpts = DefaultRecurseOpts
+	e = &testEnv{
+		wm: nil,
+		w:  nil,
+		f:  nil,
+		r:  DefaultRecurseOpts,
+	}
 
-	r.AllWalletItems = true
+	e.r.AllWalletItems = true
 
-	if wm, err = NewWalletManager(r, appIdTest); err != nil {
+	if e.wm, err = NewWalletManager(e.r, appIdTest); err != nil {
 		t.Errorf("failure when getting WalletManager '%v': %v", appIdTest, err)
 		return
 	}
 
-	if w, err = NewWallet(wm, walletTest.String(), wm.Recurse); err != nil {
+	if e.w, err = NewWallet(e.wm, walletTest.String(), e.r); err != nil {
 		t.Errorf("failure when getting Wallet '%v:%v': %v", appIdTest, walletTest.String(), err)
 		return
 	}
 
-	if f, err = NewFolder(w, folderTest.String(), w.Recurse); err != nil {
+	if e.f, err = NewFolder(e.w, folderTest.String(), e.r); err != nil {
 		t.Errorf("failure when getting Folder '%v:%v:%v': %v", appIdTest, walletTest.String(), folderTest.String(), err)
+		return
+	}
+
+	return
+}
+
+// cleanup closes connections and deletes created folders/wallets in a testEnv.
+func (e *testEnv) cleanup(t *testing.T) (err error) {
+
+	var errs []error = make([]error, 0)
+
+	if err = e.f.Delete(); err != nil {
+		errs = append(errs, err)
+		err = nil
+	}
+
+	if err = e.w.Delete(); err != nil {
+		errs = append(errs, err)
+		err = nil
+	}
+
+	if err = e.wm.Close(); err != nil {
+		errs = append(errs, err)
+		err = nil
+	}
+
+	if errs != nil && len(errs) > 0 {
+		err = NewErrors(errs...)
 		return
 	}
 

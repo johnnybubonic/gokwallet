@@ -51,6 +51,28 @@ func (b *Blob) Delete() (err error) {
 	return
 }
 
+// Exists returns true if this Blob actually exists.
+func (b *Blob) Exists() (exists bool, err error) {
+
+	if exists, err = b.folder.HasEntry(b.Name); err != nil {
+		return
+	}
+
+	return
+}
+
+// Rename renames this Blob (changes its key).
+func (b *Blob) Rename(newName string) (err error) {
+
+	if err = b.folder.RenameEntry(b.Name, newName); err != nil {
+		return
+	}
+
+	b.Name = newName
+
+	return
+}
+
 // SetValue will replace this Blob's Blob.Value.
 func (b *Blob) SetValue(newValue []byte) (err error) {
 
@@ -68,6 +90,10 @@ func (b *Blob) Update() (err error) {
 
 	var call *dbus.Call
 	var v dbus.Variant
+
+	if err = b.folder.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = b.Dbus.Call(
 		DbusWMReadEntry, 0, b.folder.wallet.handle, b.folder.Name, b.Name, b.folder.wallet.wm.AppID,

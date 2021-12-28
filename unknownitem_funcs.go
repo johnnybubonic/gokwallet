@@ -52,6 +52,28 @@ func (u *UnknownItem) Delete() (err error) {
 	return
 }
 
+// Exists returns true if this UnknownItem actually exists.
+func (u *UnknownItem) Exists() (exists bool, err error) {
+
+	if exists, err = u.folder.HasEntry(u.Name); err != nil {
+		return
+	}
+
+	return
+}
+
+// Rename renames this UnknownItem (changes its key).
+func (u *UnknownItem) Rename(newName string) (err error) {
+
+	if err = u.folder.RenameEntry(u.Name, newName); err != nil {
+		return
+	}
+
+	u.Name = newName
+
+	return
+}
+
 // SetValue will replace this UnknownItem's UnknownItem.Value.
 func (u *UnknownItem) SetValue(newValue []byte) (err error) {
 
@@ -69,6 +91,10 @@ func (u *UnknownItem) Update() (err error) {
 
 	var call *dbus.Call
 	var v dbus.Variant
+
+	if err = u.folder.wallet.walletCheck(); err != nil {
+		return
+	}
 
 	if call = u.Dbus.Call(
 		DbusWMReadEntry, 0, u.folder.wallet.handle, u.folder.Name, u.Name, u.folder.wallet.wm.AppID,

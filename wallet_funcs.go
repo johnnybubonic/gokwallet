@@ -44,7 +44,10 @@ func NewWallet(wm *WalletManager, name string, recursion *RecurseOpts) (wallet *
 	return
 }
 
-// Disconnect disconnects this Wallet from its parent WalletManager.
+/*
+	Disconnect disconnects this Wallet from its parent WalletManager.
+	You may need to run WalletManager.Update after this to clear the WalletManager cache.
+*/
 func (w *Wallet) Disconnect() (err error) {
 
 	var call *dbus.Call
@@ -169,7 +172,10 @@ func (w *Wallet) Connections() (connList []string, err error) {
 	return
 }
 
-// CreateFolder creates a new Folder in a Wallet.
+/*
+	CreateFolder creates a new Folder in a Wallet.
+	If you need a Folder object, use NewFolder instead.
+*/
 func (w *Wallet) CreateFolder(name string) (err error) {
 
 	var call *dbus.Call
@@ -223,7 +229,10 @@ func (w *Wallet) Delete() (err error) {
 	return
 }
 
-// FolderExists indicates if a Folder exists in a Wallet or not.
+/*
+	FolderExists indicates if a Folder exists in a Wallet or not.
+	Similar to Wallet.HasFolder but does not need the Wallet to be opened/unlocked.
+*/
 func (w *Wallet) FolderExists(folderName string) (exists bool, err error) {
 
 	var call *dbus.Call
